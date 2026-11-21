@@ -44,7 +44,7 @@ void CrushKnob::paint (Graphics& g)
         if ((hovering || dragging) && isEnabled())
         {
             g.setFont (CustomLookAndFeel::uiFont (11.0f, true));
-            g.setColour (CrushColours::blue);
+            g.setColour (CrushColours::accent);
             g.drawFittedText (crush::formatKnobValue (getValue()), labelArea.toNearestInt(), Justification::centred, 1, 0.7f);
         }
         else
@@ -176,7 +176,8 @@ void LcdDisplay::paint (Graphics& g)
     auto b = getLocalBounds().toFloat().reduced (1.0f);
     CustomLookAndFeel::drawLcd (g, b, dimmed);
 
-    const auto textColour = dimmed ? Colour (0xff8a9097) : Colours::white;
+    const auto textColour  = dimmed ? Colour (0xff6e6e72) : CrushColours::lightGrey;
+    const auto valueColour = dimmed ? Colour (0xff6e6e72) : CrushColours::accent;
     auto textArea = b.reduced (7.0f, 0.0f);
 
     const auto font = CustomLookAndFeel::uiFont (12.0f, true);
@@ -190,6 +191,7 @@ void LcdDisplay::paint (Graphics& g)
     g.drawText (valueText, textArea.translated (0.0f, 1.0f), Justification::centredRight);
     g.setColour (textColour);
     g.drawFittedText (nameText, nameArea, Justification::centredLeft, 1, 0.75f);
+    g.setColour (valueColour);
     g.drawText (valueText, textArea, Justification::centredRight);
 }
 
@@ -230,11 +232,13 @@ void DriveMeter::paint (Graphics& g)
         auto seg = Rectangle<float> (inner.getX() + (float) i * (segW + gap), inner.getY(), segW, inner.getHeight());
         const bool on = i < lit;
         const bool top = i >= segments - 3;               // gain cap region (x3)
-        const auto colour = top ? Colour (0xffc9e6ff) : CrushColours::blue;
+        // orange gradient across the meter; the gain-cap region (x3) glows hot
+        const auto colour = top ? CrushColours::accentLight
+                                : Colour (0xffff8a2a).interpolatedWith (Colour (0xffc4520a), (float) i / (float) (segments - 1));
 
         if (on)
         {
-            g.setColour (colour.withAlpha (0.35f));
+            g.setColour (CrushColours::accent.withAlpha (0.4f));
             g.fillRoundedRectangle (seg.expanded (1.0f, 1.0f), 1.5f);
             g.setColour (colour);
         }
@@ -244,7 +248,7 @@ void DriveMeter::paint (Graphics& g)
         }
         else
         {
-            g.setColour (Colour (0xff1a2633));
+            g.setColour (Colour (0xff2a1a10));
         }
         g.fillRoundedRectangle (seg, 1.0f);
     }
@@ -258,8 +262,9 @@ void HelpButton::paintButton (Graphics& g, bool isHighlighted, bool isDown)
     auto b = getLocalBounds().toFloat().reduced (1.0f);
     g.setColour (Colours::black.withAlpha (0.6f));
     g.fillEllipse (b.translated (0.0f, 1.0f));
-    g.setGradientFill (ColourGradient (isHighlighted ? Colour (0xff8a9096) : Colour (0xff6f757b), 0.0f, b.getY(),
-                                       Colour (0xff35393d), 0.0f, b.getBottom(), false));
+    const auto top = isHighlighted ? Colour (0xff343437).brighter (0.12f) : Colour (0xff343437);
+    const auto bottom = isHighlighted ? Colour (0xff1a1a1c).brighter (0.12f) : Colour (0xff1a1a1c);
+    g.setGradientFill (ColourGradient (isDown ? bottom : top, 0.0f, b.getY(), isDown ? top : bottom, 0.0f, b.getBottom(), false));
     g.fillEllipse (isDown ? b.reduced (0.5f) : b);
     g.setColour (CrushColours::bevelDark);
     g.drawEllipse (b, 1.0f);
@@ -293,7 +298,7 @@ void HelpOverlay::paint (Graphics& g)
     g.setFont (CustomLookAndFeel::uiFont (11.0f));
     for (auto* line : lines)
     {
-        g.setColour (String (line).startsWith ("Click") ? CrushColours::blue : Colour (0xffdfe3e6));
+        g.setColour (String (line).startsWith ("Click") ? CrushColours::accent : Colour (0xffdfe3e6));
         g.drawFittedText (line, text.removeFromTop (18.0f).toNearestInt(), Justification::centredLeft, 1, 0.8f);
     }
 }
